@@ -41,7 +41,7 @@ import com.waz.zclient.paintcode.ManageServicesIcon
 import com.waz.zclient.ui.text.{GlyphTextView, TypefaceTextView}
 import com.waz.zclient.ui.theme.ThemeUtils
 import com.waz.zclient.ui.utils.ColorUtils
-import com.waz.zclient.utils.ContextUtils.{getColor, getDimenPx}
+import com.waz.zclient.utils.ContextUtils.{getColor, getDimenPx, getString}
 import com.waz.zclient.utils.ZTimeFormatter.getSeparatorTime
 import com.waz.zclient.utils._
 import com.waz.zclient.{R, ViewHelper}
@@ -221,7 +221,7 @@ class UserPartView(context: Context, attrs: AttributeSet, style: Int) extends Li
 
   userId(chathead.setUserId)
 
-  user.map(u => if (u.isWireBot) u.name else u.getDisplayName).onUi(tvName.setTransformedText(_))
+  user.map(u => if (u.isWireBot) u.name else if (u.deleted) Name(getString(R.string.default_deleted_username)) else u.getDisplayName).onUi(tvName.setTransformedText(_))
   user.map(_.isWireBot).on(Threading.Ui) { isBot.setVisible }
 
   user.map(_.accent).on(Threading.Ui) { a =>
