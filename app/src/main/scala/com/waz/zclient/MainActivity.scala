@@ -189,9 +189,11 @@ class MainActivity extends BaseActivity
               pendingPw    <- z.userPrefs(PendingPassword).apply()
               pendingEmail <- z.userPrefs(PendingEmail).apply()
               handle       <- z.users.selfUser.map(_.handle).head
+              ssoLogin     <- accountsService.activeAccount.map(_.exists(_.ssoId.isDefined)).head
             } yield {
               val (f, t) =
-                if (email.isDefined && pendingPw)                 (SetOrRequestPasswordFragment(email.get), SetOrRequestPasswordFragment.Tag)
+                if (ssoLogin)                                     (new MainPhoneFragment,                   MainPhoneFragment.Tag)
+                else if (email.isDefined && pendingPw)            (SetOrRequestPasswordFragment(email.get), SetOrRequestPasswordFragment.Tag)
                 else if (pendingEmail.isDefined)                  (VerifyEmailFragment(pendingEmail.get),   VerifyEmailFragment.Tag)
                 else if (email.isEmpty && isLogin && isNewClient
                   && phone.isDefined)                             (AddEmailFragment(),                      AddEmailFragment.Tag)
@@ -205,21 +207,25 @@ class MainActivity extends BaseActivity
               self         <- am.getSelf
               pendingPw    <- am.storage.userPrefs(PendingPassword).apply()
               pendingEmail <- am.storage.userPrefs(PendingEmail).apply()
+              ssoLogin     <- accountsService.activeAccount.map(_.exists(_.ssoId.isDefined)).head
             } yield {
               val (f, t) =
-                if (self.email.isDefined && pendingPw) (SetOrRequestPasswordFragment(self.email.get), SetOrRequestPasswordFragment.Tag)
-                else if (pendingEmail.isDefined)       (VerifyEmailFragment(pendingEmail.get),        VerifyEmailFragment.Tag)
-                else if (self.email.isEmpty)           (AddEmailFragment(),                           AddEmailFragment.Tag)
-                else                                   (OtrDeviceLimitFragment.newInstance,           OtrDeviceLimitFragment.Tag)
+                if (ssoLogin)                               (OtrDeviceLimitFragment.newInstance,           OtrDeviceLimitFragment.Tag)
+                else if (self.email.isDefined && pendingPw) (SetOrRequestPasswordFragment(self.email.get), SetOrRequestPasswordFragment.Tag)
+                else if (pendingEmail.isDefined)            (VerifyEmailFragment(pendingEmail.get),        VerifyEmailFragment.Tag)
+                else if (self.email.isEmpty)                (AddEmailFragment(),                           AddEmailFragment.Tag)
+                else                                        (OtrDeviceLimitFragment.newInstance,           OtrDeviceLimitFragment.Tag)
               replaceMainFragment(f, t, addToBackStack = false)
             }
           case Right(PasswordMissing) =>
             for {
               self         <- am.getSelf
               pendingEmail <- am.storage.userPrefs(PendingEmail).apply()
+              ssoLogin     <- accountsService.activeAccount.map(_.exists(_.ssoId.isDefined)).head
             } {
               val (f ,t) =
-                if (self.email.isDefined)        (SetOrRequestPasswordFragment(self.email.get, hasPassword = true), SetOrRequestPasswordFragment.Tag)
+                if (ssoLogin)                    (new MainPhoneFragment,                                            MainPhoneFragment.Tag)
+                else if (self.email.isDefined)   (SetOrRequestPasswordFragment(self.email.get, hasPassword = true), SetOrRequestPasswordFragment.Tag)
                 else if (pendingEmail.isDefined) (VerifyEmailFragment(pendingEmail.get, hasPassword = true),        VerifyEmailFragment.Tag)
                 else                             (AddEmailFragment(hasPassword = true),                             AddEmailFragment.Tag)
               replaceMainFragment(f, t, addToBackStack = false)
